@@ -61,12 +61,12 @@ async def add_inline_keyboard_with_action(markup: InlineKeyboardMarkup) -> Inlin
 
     :return:
     """
-    markup.add(
-        types.InlineKeyboardButton(
-            text='Добавить номер акта',
-            callback_data=posts_cb.new(id='-', action='generate_act_add_act_number')
-        )
-    )
+    # markup.add(
+    #     types.InlineKeyboardButton(
+    #         text='Добавить номер акта',
+    #         callback_data=posts_cb.new(id='-', action='generate_act_add_act_number')
+    #     )
+    # )
     markup.add(
         types.InlineKeyboardButton(
             text='Продолжить',

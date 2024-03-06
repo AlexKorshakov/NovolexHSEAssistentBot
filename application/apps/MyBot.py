@@ -58,14 +58,13 @@ async def bot_send_document(*, chat_id: int | str, doc_path: str, caption: str =
     :param kvargs: dict
     :return:
     """
-
     await MyBot.bot.send_chat_action(chat_id=chat_id, action=ChatActions.UPLOAD_DOCUMENT)
     await asyncio.sleep(2)  # скачиваем файл и отправляем его пользователю
 
     try:
         with open(file=doc_path, mode='rb') as doc:
             result: types.Message | None = await MyBot.bot.send_document(
-                chat_id=chat_id, document=doc, caption=caption, **kvargs
+                    chat_id=chat_id, document=doc, caption=caption, **kvargs
             )
 
         logger.info(f"{await MyBot.get_name()} {chat_id = } {calling_fanc_name} {caption} отправлен отчет {doc}")
@@ -88,13 +87,12 @@ async def bot_send_photo(*, chat_id: int | str, photo=None, caption: str = None)
     Источник: https://core.telegram.org/bots/api#sendmessage
 
     """
-
     await MyBot.bot.send_chat_action(chat_id=chat_id, action=ChatActions.UPLOAD_PHOTO)
     await asyncio.sleep(2)  # скачиваем файл и отправляем его пользователю
 
     try:
         result: types.Message | None = await MyBot.bot.send_photo(
-            chat_id=chat_id, photo=photo, caption=caption
+                chat_id=chat_id, photo=photo, caption=caption
         )
 
     except OSError as err:
@@ -111,7 +109,6 @@ async def bot_send_photo(*, chat_id: int | str, photo=None, caption: str = None)
 
 
 class MyBot:
-
     """Основной класс запуска бота
 
     """
@@ -144,12 +141,12 @@ class MyBot:
         """Сборка и запуск бота"""
         try:
             await executor.start_polling(
-                dispatcher=cls.dp,
-                on_startup=cls.on_startup,
-                on_shutdown=cls.on_shutdown,
-                timeout=200,
-                skip_updates=SKIP_UPDATES,
-                allowed_updates=await cls.get_handled_updates_list(cls.dp)
+                    dispatcher=cls.dp,
+                    on_startup=cls.on_startup,
+                    on_shutdown=cls.on_shutdown,
+                    timeout=200,
+                    skip_updates=SKIP_UPDATES,
+                    allowed_updates=await cls.get_handled_updates_list(cls.dp)
             )
         except RuntimeWarning as err:
             logger.error(f"Bot start RuntimeWarning {repr(err)}")
@@ -266,7 +263,7 @@ async def bot_send_message(
     """
     try:
         result: types.Message | None = await _send_message(
-            chat_id=chat_id, text=text, reply_markup=reply_markup, **kvargs
+                chat_id=chat_id, text=text, reply_markup=reply_markup, **kvargs
         )
 
     except AttributeError as err:
@@ -291,7 +288,7 @@ async def _send_message(*, chat_id: int | str, text: str,
     """
     try:
         result: types.Message | None = await MyBot.bot.send_message(
-            chat_id=chat_id, text=text, reply_markup=reply_markup, **kvargs
+                chat_id=chat_id, text=text, reply_markup=reply_markup, **kvargs
         )
         return result
 
@@ -309,10 +306,10 @@ async def bot_edit_message(*, hse_user_id: int, message_id: int, reply_text: str
     # pprint(f'{__name__} {await fanc_name()} {kvargs = }', width=200)
 
     result: bool = await MyBot.bot.edit_message_text(
-        chat_id=hse_user_id,
-        text=reply_text,
-        message_id=message_id,
-        reply_markup=reply_markup
+            chat_id=hse_user_id,
+            text=reply_text,
+            message_id=message_id,
+            reply_markup=reply_markup
     )
 
     return result
@@ -373,9 +370,9 @@ async def bot_delete_markup(message: types.Message, sleep_sec: int = None):
 
     try:
         result = await MyBot.bot.edit_message_reply_markup(
-            chat_id=chat_id,
-            message_id=message.message_id - 1,
-            reply_markup=None
+                chat_id=chat_id,
+                message_id=message.message_id - 1,
+                reply_markup=None
         )
     except MessageNotModified as err:
         logger.warning(f'{await MyBot.get_name()} {chat_id = } {repr(err)}')
@@ -392,6 +389,52 @@ async def bot_delete_markup(message: types.Message, sleep_sec: int = None):
     if result:
         return True
     return False
+
+
+async def notify_user_for_choice(call_msg: types.CallbackQuery | types.Message, user_id: int | str = None,
+                                 data_answer: str = None) -> bool:
+    """Уведомление пользователя о выборе + логирование
+
+    :param data_answer:
+    :param user_id: int | str id пользователя
+    :param call_msg:
+    :return None :
+    """
+    if isinstance(call_msg, types.CallbackQuery):
+        for i in ('previous_paragraph', 'move_up', 'move_down'):
+            if i in call_msg.data: return True
+
+        mesg_text: str = f"Выбрано: {data_answer}"
+        if call_msg.data in call_msg.message.text:
+            mesg_list: list = [item for item in call_msg.message.text.split('\n\n') if call_msg.data in item]
+            mesg_text = f"Выбрано: {mesg_list[0]}"
+
+        try:
+            hse_user_id = call_msg.message.chat.id if call_msg else user_id
+            logger.debug(f"{hse_user_id = } Выбрано: {data_answer} {call_msg.data}")
+            await call_msg.message.edit_text(text=mesg_text, reply_markup=None)
+            return True
+
+        except Exception as err:
+            logger.debug(f"{call_msg.message.chat.id = } {repr(err)}")
+
+    if isinstance(call_msg, types.Message):
+        for i in ('previous_paragraph', 'move_up', 'move_down'):
+            if i in call_msg.text: return True
+
+        mesg_text: str = f"Выбрано: {data_answer}"
+        if call_msg.text:
+            mesg_list: list = [item for item in call_msg.text.split('\n\n') if call_msg.text in item]
+            mesg_text = f"Выбрано: {mesg_list[0] if mesg_list else ''}"
+
+        try:
+            hse_user_id = call_msg.chat.id if call_msg else user_id
+            logger.debug(f"{hse_user_id = } Выбрано: {data_answer} {call_msg.text}")
+            await call_msg.edit_text(text=mesg_text, reply_markup=None)
+            return True
+
+        except Exception as err:
+            logger.debug(f"{call_msg.chat.id = } {repr(err)}")
 
 
 async def fanc_name() -> str:

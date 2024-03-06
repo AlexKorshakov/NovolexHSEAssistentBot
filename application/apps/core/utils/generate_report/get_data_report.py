@@ -5,8 +5,8 @@ from loader import logger
 from apps.MyBot import bot_send_message
 from apps.core.bot.messages.messages import Messages
 from apps.core.utils.generate_report.generator_report import create_dataframe_from_data
-from apps.core.utils.goolgedrive_processor.GoogleDriveUtils.download_file_for_google_drive import \
-    upload_files_from_google_drive
+# from apps.core.utils.goolgedrive_processor.GoogleDriveUtils.download_file_for_google_drive import \
+#     upload_files_from_google_drive
 
 from apps.core.utils.secondary_functions.get_filepath import (create_file_path,
                                                               get_json_full_filepath,
@@ -35,8 +35,8 @@ async def get_data_report(chat_id: int, file_list: list = None):
         await create_file_path(path=json_full_filepath)
         await create_file_path(path=report_full_filepath)
 
-        await upload_files_from_google_drive(
-            chat_id=chat_id, file_path=json_full_filepath, photo_path=photo_full_filepath)
+        # await upload_files_from_google_drive(
+        #     chat_id=chat_id, file_path=json_full_filepath, photo_path=photo_full_filepath)
 
     dataframe = await create_dataframe(file_list=file_list)
 

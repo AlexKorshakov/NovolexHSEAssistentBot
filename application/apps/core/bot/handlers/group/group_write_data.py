@@ -224,7 +224,7 @@ async def db_add_violation(violation_data: dict, table_name: str) -> bool:
     if not table_name: return False
 
     is_added: bool = await GroupDataBase().add_data(
-        table_name=table_name, data_dict=violation_data
+            table_name=table_name, data_dict=violation_data
     )
     return bool(is_added)
 
@@ -261,7 +261,7 @@ async def db_get_id(table: str, entry: str, file_id: str = None, calling_functio
     """
     try:
         value: int = await GroupDataBase().get_id(
-            table_name=table, entry=entry, file_id=file_id, calling_function_name=calling_function_name
+                table_name=table, entry=entry, file_id=file_id, calling_function_name=calling_function_name
         )
         return value
 
@@ -282,6 +282,28 @@ async def db_get_clean_headers(table_name: str) -> list:
 
     clean_headers: list = [item[1] for item in await db_get_table_headers(table_name=table_name)]
     return clean_headers
+
+
+async def db_get_data_list(query: str) -> list:
+    """Получение list с данными по запросу query
+
+    :return: list
+    """
+    try:
+        datas_query: list = await GroupDataBase().get_data_list(query=query)
+
+    except OperationalError as err:
+        logger.error(f'{repr(err)} {query = }')
+        return []
+
+    return datas_query
+
+
+async def db_check_data_exists(table_name, post_id, query):
+    data_exists: dict = await GroupDataBase().get_dict_data_from_table_from_id(
+            table_name=table_name, data_id=post_id, query=query
+    )
+    return data_exists
 
 
 async def test_2():
@@ -310,10 +332,10 @@ async def test_2():
 
 async def test_3():
     category_id = await db_get_id(
-        table='core_category',
-        entry='СИЗ',
-        file_id='10.01.2024___373084462___9229',
-        calling_function_name=f'{await fanc_name()}: category'
+            table='core_category',
+            entry='СИЗ',
+            file_id='10.01.2024___373084462___9229',
+            calling_function_name=f'{await fanc_name()}: category'
     )
     pprint(category_id)
 

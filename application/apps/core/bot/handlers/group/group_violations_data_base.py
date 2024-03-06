@@ -57,8 +57,6 @@ class GroupDataBase:
 
         if not isinstance(data_dict, dict): return False
 
-        # pprint(data_dict)
-
         dict_keys = ', '.join(list(data_dict.keys()))
         qs = ', '.join(['?'] * len(data_dict))
 
@@ -124,7 +122,7 @@ class GroupDataBase:
 
         if not result:
             logger.error(
-                f"no matches found {entry = } in {table_name} in title because .cursor.execute is none file_id: {file_id}")
+                    f"no matches found {entry = } in {table_name} in title because .cursor.execute is none file_id: {file_id}")
             return 0
 
         entry_id: int = 0
@@ -140,6 +138,48 @@ class GroupDataBase:
             return 0
 
         return entry_id
+
+    async def get_dict_data_from_table_from_id(self, table_name: str, data_id: int, query: str = None) -> dict:
+        """Получение данных из таблицы table_name по id
+
+        :param table_name: str - имя таблицы в БД
+        :param data_id: int  id записи
+        :param query: str запрос при наличии
+        """
+        check_result: bool = await self.get_check_param(__file__, await fanc_name(), table_name=table_name, data_id=data_id)
+        if not check_result: return {}
+
+        if not query:
+            query_kwargs: dict = {
+                "action": 'SELECT', "subject": '*',
+                "conditions": {
+                    "id": data_id,
+                },
+            }
+            query: str = await QueryConstructor(None, table_name, **query_kwargs).prepare_data()
+
+        values: list = await self.get_data_list(query=query)
+        headers: list = [item[1] for item in await self.get_table_headers(table_name=table_name)]
+        clean_values: list = values[0] if values else []
+
+        return dict((header, item_value) for header, item_value in zip(headers, clean_values))
+
+    async def get_check_param(self, local_file: str, calling_function: str, **kvargs) -> bool:
+        """Проверка параметров """
+        calling_file: str = f'{os.sep}'.join(local_file.split(os.sep)[-2:])
+
+        result_list: list = []
+        print_dict: dict = {}
+
+        for param_num, param in enumerate(kvargs, start=1):
+
+            if kvargs[param] is None:
+                logger.error(f'{calling_file} {calling_function} Invalid param. #{param_num} {param = } {kvargs[param]}')
+
+            result_list.append(kvargs[param])
+            print_dict[param] = kvargs[param]
+
+        return all(result_list)
 
     # async def get_id_violation(self, file_id: str = None) -> int:
     #     """Получение id записи по значению file_id из таблицы core_violations"""
@@ -378,27 +418,27 @@ class GroupDataBase:
     #
     #     finally:
     #         self.cursor.close()
-    #
-    # async def get_data_list(self, query: str = None) -> list:
-    #     """Получение данных из таблицы по запросу query
-    #     """
-    #     param_list: list = [query]
-    #     for param in param_list:
-    #         if not param:
-    #             logger.error(f'{__file__} {await fanc_name()} Invalid param. {param = }')
-    #             return []
-    #
-    #     try:
-    #         with self.connection:
-    #             return self.cursor.execute(query).fetchall()
-    #
-    #     except sqlite3.OperationalError as err:
-    #         logger.error(f"sqlite3.OperationalError {err = } {query = }")
-    #         return []
-    #
-    #     # finally:
-    #     #     self.cursor.close()
-    #
+
+    async def get_data_list(self, query: str = None) -> list:
+        """Получение данных из таблицы по запросу query
+        """
+        param_list: list = [query]
+        for param in param_list:
+            if not param:
+                logger.error(f'{__file__} {await fanc_name()} Invalid param. {param = }')
+                return []
+
+        try:
+            with self.connection:
+                return self.cursor.execute(query).fetchall()
+
+        except sqlite3.OperationalError as err:
+            logger.error(f"sqlite3.OperationalError {err = } {query = }")
+            return []
+
+        # finally:
+        #     self.cursor.close()
+
     # async def get_dict_data_from_table_from_id(self, table_name: str, data_id: int, query: str = None) -> dict:
     #     """Получение данных из таблицы table_name по id
     #
@@ -520,25 +560,25 @@ class GroupDataBase:
     #     finally:
     #         self.cursor.close()
     #
-    # async def get_all_tables_names(self) -> list:
-    #     """Получение всех имен таблиц в БД
-    #
-    #     :return:
-    #     """
-    #     query: str = "SELECT name FROM sqlite_master WHERE type='table';"
-    #
-    #     try:
-    #         with self.connection:
-    #             result: list = self.cursor.execute(query).fetchall()
-    #             return result
-    #
-    #     except sqlite3.OperationalError as err:
-    #         logger.error(f"sqlite3.OperationalError {err = } {query = }")
-    #         return []
-    #
-    #     finally:
-    #         self.cursor.close()
-    #
+    async def get_all_tables_names(self) -> list:
+        """Получение всех имен таблиц в БД
+
+        :return:
+        """
+        query: str = "SELECT name FROM sqlite_master WHERE type='table';"
+
+        try:
+            with self.connection:
+                result: list = self.cursor.execute(query).fetchall()
+                return result
+
+        except sqlite3.OperationalError as err:
+            logger.error(f"sqlite3.OperationalError {err = } {query = }")
+            return []
+
+        finally:
+            self.cursor.close()
+
     # async def update_table_column_value(self, query: str, item_name: str, item_value: str) -> bool:
     #     """Обновление записи id в database
     #
@@ -646,6 +686,8 @@ class GroupDataBase:
     #     number_list: list = [data_item[0] for data_item in datas_query]
     #     act_max_number = max(number_list)
     #     return act_max_number
+
+
 #
 #
 # async def get_check_param(local_file: str, calling_function: str, **kvargs) -> bool:
@@ -897,8 +939,8 @@ async def test():
     table_name = 'core_sublocation'
     post_id = 10
     data_exists: dict = GroupDataBase().get_dict_data_from_table_from_id(
-        table_name=table_name,
-        id=post_id,
+            table_name=table_name,
+            id=post_id,
     )
     logger.info(f'{data_exists = }')
 
@@ -943,7 +985,7 @@ async def test_7():
     column_name = 'user_id'
 
     result = await GroupDataBase().update_violation_column_value(
-        column_name=column_name, value=value, row_id=row_id
+            column_name=column_name, value=value, row_id=row_id
     )
 
     pprint(f'{await fanc_name()} ::: {row_id = } ::: {result = }', width=160)

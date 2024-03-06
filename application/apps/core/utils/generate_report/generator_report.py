@@ -1,22 +1,27 @@
 import asyncio
 
+import openpyxl
+from openpyxl.styles import Border, Side, Alignment, Font
+from openpyxl.worksheet.worksheet import Worksheet
 from pandas import DataFrame
 
 from apps.MyBot import bot_send_message
 from apps.core.bot.messages.messages import Messages
 # from apps.core.utils.generate_report.convert_xlsx_to_pdf import convert_report_to_pdf
 from apps.core.utils.generate_report.create_xlsx.create_xlsx import create_xlsx
-from apps.core.utils.generate_report.generate_act_prescription.set_act_format_ import format_act_photo_header, \
-    format_act_photo_description
+from apps.core.utils.generate_report.generate_act_prescription.set_act_format_ import (format_act_photo_header,
+                                                                                       format_act_photo_description)
 from apps.core.utils.generate_report.generate_act_prescription.set_act_value import get_act_headlines_data_values
 from apps.core.utils.generate_report.generate_act_prescription.set_act_values import set_act_photographic_materials
 from apps.core.utils.generate_report.get_file_list import get_json_file_list
 from apps.core.utils.generate_report.get_report_path import get_full_report_name
-from apps.core.utils.generate_report.sheet_formatting.sheet_formatting import format_sheets
 from apps.core.utils.img_processor.insert_img import insert_images_to_sheet
 from apps.core.utils.json_worker.read_json_file import read_json_file
 from apps.core.utils.reports_processor.report_worker_utils import get_clean_headers
 from loader import logger
+
+MAXIMUM_COLUMN_WIDTH: int = 40
+MAXIMUM_ROW_HEIGHT: int = 120
 
 
 async def create_report_from_other_method(chat_id, full_report_path=None,
@@ -225,6 +230,105 @@ async def anchor_photo(dataframe, row_number, workbook, worksheet, full_act_path
     print_area = f'$A$1:M{photo_row + row_num + 1}'
 
     return print_area
+
+
+async def format_sheets(worksheet: Worksheet) -> Worksheet:
+    """Пошаговое форматирование страницы.
+    Возвращает измененную страницу.
+    """
+    await set_border(worksheet)
+    await set_alignment(worksheet)
+    await set_font(worksheet)
+    await set_column_widths(worksheet)
+    await set_row_height(worksheet)
+    return worksheet
+
+
+async def set_border(worksheet):
+    """Форматирование ячейки: все границы ячейки
+
+    """
+    thin_border = Border(left=Side(style='thin'),
+                         right=Side(style='thin'),
+                         top=Side(style='thin'),
+                         bottom=Side(style='thin'))
+
+    for row in worksheet.iter_rows():
+        for cell in row:
+            try:
+                cell.border = thin_border
+            except Exception as err:
+                logger.error(f"set_border {repr(err)}")
+
+
+async def set_alignment(worksheet: Worksheet):
+    """Форматирование ячейки: положение текста в ячейке (лево верх)
+    """
+    wrap_alignment = Alignment(wrap_text=True, horizontal='left', vertical='center')
+
+    for row in worksheet.iter_rows():
+        for cell in row:
+            try:
+                cell.alignment = wrap_alignment
+            except Exception as err:
+                logger.error(f"set_alignment {repr(err)}")
+
+
+async def set_font(worksheet: Worksheet) -> bool:
+    """Форматирование ячейки: размер шрифта
+
+    """
+    for row in worksheet.iter_rows():
+        for cell in row:
+            try:
+                cell.font = Font(size=14)
+            except Exception as err:
+                logger.error(f"sets_report_font {repr(err)}")
+                continue
+    return True
+
+
+async def set_column_widths(worksheet: Worksheet):
+    """Форматирование ячейки: ширина столбца
+
+    """
+
+    for column_cells in worksheet.columns:
+        # максимальная ширина столбца
+        column_length = max(len(_as_text(cell.value)) for cell in column_cells)
+
+        if column_length < MAXIMUM_COLUMN_WIDTH:
+            new_column_length = column_length
+        else:
+            new_column_length = MAXIMUM_COLUMN_WIDTH
+
+        new_column_letter: int = (openpyxl.utils.get_column_letter(column_cells[0].column))
+        if new_column_length > 0:
+            try:
+                worksheet.column_dimensions[new_column_letter].width = new_column_length + 1
+            except Exception as err:
+                logger.error(f"set_column_widths {repr(err)}")
+
+
+def _as_text(value) -> str:
+    """Приведение данных к str
+
+    """
+    if value is None:
+        return ""
+    return str(value)
+
+
+async def set_row_height(worksheet: Worksheet):
+    """Форматирование ячейки: высота шрифта
+    """
+    for ind in range(worksheet.max_row):
+        if ind == 0:
+            continue
+        try:
+            worksheet.row_dimensions[ind + 1].height = MAXIMUM_ROW_HEIGHT
+        except Exception as err:
+            logger.error(F"set_row_height {repr(err)}")
 
 
 async def test():

@@ -72,8 +72,8 @@ async def filter_is_private(message: types.Message):
     return message.chat.type in ['private']
 
 
-# async def filter_is_channel(message: types.Message):
-#     return ChatTypeFilter(types.ChatType.CHANNEL)
+async def filter_is_channel(message: types.Message):
+    return ChatTypeFilter(types.ChatType.CHANNEL)
 
 
 async def filter_is_super_user(message: types.Message) -> bool:

@@ -9,14 +9,15 @@ from aiogram.dispatcher import FSMContext
 
 from apps.MyBot import MyBot
 from apps.core.bot.data.board_config import BoardConfig as board_config
-from apps.core.bot.filters.custom_filters import filter_is_group
+from apps.core.bot.filters.custom_filters import (filter_is_group,
+                                                  filter_is_channel)
 from apps.core.bot.handlers.group.group_text_processing import (data_text_reader,
-                                                                processing_text_violation,
-                                                                processing_data_text_work)
+                                                                processing_data_text_work,
+                                                                processing_text_violation)
 from loader import logger
 
 
-# @MyBot.dp.message_handler(filter_is_group, content_types=['text'], state='*')
+@MyBot.dp.message_handler(filter_is_channel, content_types=types.ContentType.ANY, state='*')
 @MyBot.dp.message_handler(filter_is_group, content_types=types.ContentType.ANY, state='*')
 async def text_message_handler_in_group(message: types.Message, album: list[types.Message] = None,
                                         state: FSMContext = None, chat_id: str | int = None,
@@ -45,6 +46,7 @@ async def text_message_handler_in_group(message: types.Message, album: list[type
 
     result = await processing_text_violation(message, album=album, user_id=user_id, chat_id=chat_id, state=state)
     return result
+
     # data_text = [item for item in data_text_list if '#нарушение' in item]
     # if data_text and data_text_list[0] == '#нарушение':
     #     result = await processing_text_violation(message, album=album, user_id=user_id, chat_id=chat_id, state=state)

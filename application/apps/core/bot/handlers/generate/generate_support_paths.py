@@ -45,14 +45,13 @@ async def date_now() -> str:
     """Возвращает текущую дату в формате дд.мм.гггг
     :return:
     """
-    return str((datetime.datetime.now()).strftime("%d.%m.%Y"))
+    return str((datetime.now()).strftime("%d.%m.%Y"))
 
 
 async def get_full_act_prescription_path(chat_id, act_number, act_date, constractor_id) -> str:
     """Получение и создание полного пути акта предписания
 
     """
-
     contractor_data: dict = await get_general_constractor_data(
         constractor_id=constractor_id, type_constractor='general'
     )

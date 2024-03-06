@@ -189,9 +189,9 @@
 # async def get_id_list(hse_user_id: str | int, user_role: str = None, hse_role_df: DataFrame = None) -> list:
 #     """Получение id"""
 #
-#     if not await check_dataframe_role(hse_role_df, hse_user_id):
+#     if not await check_dataframe(hse_role_df, hse_user_id):
 #         hse_role_df: DataFrame = await get_role_receive_df()
-#         if not await check_dataframe_role(hse_role_df, hse_user_id):
+#         if not await check_dataframe(hse_role_df, hse_user_id):
 #             return []
 #
 #     try:
@@ -209,7 +209,7 @@
 #     return unique_hse_telegram_id
 #
 #
-# async def check_dataframe_role(dataframe: DataFrame, hse_user_id: str | int) -> bool:
+# async def check_dataframe(dataframe: DataFrame, hse_user_id: str | int) -> bool:
 #     """Проверка dataframe на наличие данных
 #
 #     :param dataframe:

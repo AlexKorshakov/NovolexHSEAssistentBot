@@ -25,9 +25,6 @@ from config.config import WRITE_DATA_ON_GOOGLE_DRIVE, Udocan_media_path
 from loader import logger
 from tqdm.asyncio import tqdm
 
-
-
-
 DEBUG: bool = False
 
 MAX_FILE: int = 10000
@@ -132,20 +129,20 @@ async def upload_file_on_google_disc(drive_service: object, preparing_data: dict
     if not drive_service: drive_service = await drive_account_auth_with_oauth2client()
 
     violation_file_id: str = await upload_file_on_gdrave(
-        chat_id=id_item,
-        drive_service=drive_service,
-        parent=parent,
-        file_path=file_path,
-        notify_user=False
+            chat_id=id_item,
+            drive_service=drive_service,
+            parent=parent,
+            file_path=file_path,
+            notify_user=False
     )
 
     await get_user_permissions(drive_service=drive_service, file_id=violation_file_id)
 
     await move_file(
-        service=drive_service,
-        file_id=violation_file_id,
-        add_parents=parent,
-        remove_parents=preparing_data["report_folder_id"]
+            service=drive_service,
+            file_id=violation_file_id,
+            add_parents=parent,
+            remove_parents=preparing_data["report_folder_id"]
     )
 
 
@@ -162,31 +159,31 @@ async def get_file_location_map(drive_service: object, type_files_name: str) -> 
     if not drive_service: drive_service = await drive_account_auth_with_oauth2client()
 
     root_folder_id = await get_root_folder_id(
-        drive_service=drive_service,
-        root_folder_name=ROOT_REPORT_FOLDER_NAME
+            drive_service=drive_service,
+            root_folder_name=ROOT_REPORT_FOLDER_NAME
     )
 
     folders_list = await find_files_or_folders_list_by_parent_id(
-        drive_service=drive_service, folder_id=root_folder_id, is_folder=True
+            drive_service=drive_service, folder_id=root_folder_id, is_folder=True
     )
 
     data_list = []
     for item in tqdm(folders_list):
         folder_id = item['id']
         folder_list = await find_files_or_folders_list_by_parent_id(
-            drive_service, folder_id=folder_id, is_folder=True, mime_type='application/vnd.google-apps.folder'
+                drive_service, folder_id=folder_id, is_folder=True, mime_type='application/vnd.google-apps.folder'
         )
 
         file_list = await find_files_or_folders_list_by_parent_id(
-            drive_service, folder_id=folder_id, is_folder=False, mime_type=mime_type
+                drive_service, folder_id=folder_id, is_folder=False, mime_type=mime_type
         )
 
         data_list.append(
-            {
-                'user': item,
-                'reg_file': file_list[0] if len(file_list) > 0 else [],
-                'folder_list': folder_list
-            }
+                {
+                    'user': item,
+                    'reg_file': file_list[0] if len(file_list) > 0 else [],
+                    'folder_list': folder_list
+                }
         )
     return data_list
 
@@ -210,8 +207,8 @@ async def get_global_file_list(drive_service: object, file_location_map: list) -
             file_list = []
             if type_files['name'] in [k for k, v in DICT_TYPES.items()]:
                 file_list = await find_files_or_folders_list_by_parent_id(
-                    drive_service=drive_service, folder_id=type_files['id'],
-                    is_folder=False, mime_type=DICT_TYPES[type_files['name']]
+                        drive_service=drive_service, folder_id=type_files['id'],
+                        is_folder=False, mime_type=DICT_TYPES[type_files['name']]
                 )
             user_file_list.append(file_list)
 
@@ -324,8 +321,8 @@ async def sync_local_to_google_drive(drive_service: object = None, file_list: li
 
         if last_id_item != id_item:
             preparing_data: dict = await get_folders_ids_from_google_drive(
-                user=id_item,
-                drive_service=drive_service
+                    user=id_item,
+                    drive_service=drive_service
             )
 
             # await preparing_violation_data_for_loading_to_google_drive(
@@ -386,9 +383,9 @@ async def sync_google_drive_to_local(drive_service: object, files_to_download: l
         if number == MAX_FILE: break
         await create_file_path(path=item_file["file_path"])
         await upload_file(
-            drive_service=drive_service,
-            file_id=item_file["id"],
-            file_full_name=item_file["full_name"]
+                drive_service=drive_service,
+                file_id=item_file["id"],
+                file_full_name=item_file["full_name"]
         )
     print(f'download {number} files for {len(files_to_download)}')
     return True
@@ -415,8 +412,8 @@ async def get_global_files_for_sync(drive_service: object, type_files: str) -> d
         return {}
 
     global_file_list: list = await get_global_file_list(
-        drive_service=drive_service,
-        file_location_map=file_location_map
+            drive_service=drive_service,
+            file_location_map=file_location_map
     )
     if not global_file_list:
         return {}
@@ -453,9 +450,9 @@ async def get_list_files_to_download_on_google_drive(drive_service: object, loca
         global_files = await get_global_files_for_sync(drive_service=drive_service, type_files=type_files)
 
     list_files_to_download: list = await get_list_files_to_download(
-        google_files=global_files[type_files],
-        local_files=local_files,
-        folder_name=type_files
+            google_files=global_files[type_files],
+            local_files=local_files,
+            folder_name=type_files
     )
     return list_files_to_download
 
@@ -469,18 +466,18 @@ async def get_files_to_sync(drive_service: object, endswith: str, type_files: st
     """
 
     file_list, local_files = await get_local_files_for_sync(
-        endswith=endswith
+            endswith=endswith
     )
 
     dict_files: dict = await get_global_files_for_sync(
-        drive_service=drive_service,
-        type_files=type_files
+            drive_service=drive_service,
+            type_files=type_files
     )
 
     files_to_download: list = await get_list_files_to_download_on_google_drive(
-        drive_service=drive_service, local_files=local_files,
-        global_files=dict_files, type_files=type_files,
-        endswith=endswith
+            drive_service=drive_service, local_files=local_files,
+            global_files=dict_files, type_files=type_files,
+            endswith=endswith
     )
 
     return files_to_download
@@ -520,7 +517,7 @@ async def run_sync(type_files='photo'):
         return
 
     file_list, local_files = await get_local_files_for_sync(
-        endswith=endswith
+            endswith=endswith
     )
     if await sync_local_to_google_drive(
             drive_service=drive_service,
@@ -533,9 +530,9 @@ async def run_sync(type_files='photo'):
         print(f"Ошибка синхронизации local storage -> google_drive")
 
     files_to_download = await get_files_to_sync(
-        drive_service=drive_service,
-        endswith=endswith,
-        type_files=type_files
+            drive_service=drive_service,
+            endswith=endswith,
+            type_files=type_files
     )
     if await sync_google_drive_to_local(
             drive_service=drive_service,

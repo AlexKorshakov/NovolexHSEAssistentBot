@@ -8,7 +8,7 @@ from apps.core.bot.messages.messages import Messages
 from loader import logger
 
 
-async def create_xlsx(chat_id: int, full_act_path: str):
+async def create_xlsx(chat_id: int, full_act_path: str) -> not (not (Workbook, Worksheet) and not (None, None)):
     """
     """
 
@@ -16,19 +16,19 @@ async def create_xlsx(chat_id: int, full_act_path: str):
     if is_created is None:
         logger.warning(Messages.Error.workbook_not_create)
         await bot_send_message(chat_id=chat_id, text=Messages.Error.workbook_not_create)
-        return
+        return None, None
 
     workbook = await get_workbook(fill_report_path=full_act_path)
     if workbook is None:
         logger.warning(Messages.Error.workbook_not_found)
         await bot_send_message(chat_id=chat_id, text=Messages.Error.workbook_not_found)
-        return
+        return None, None
 
     worksheet = await get_worksheet(workbook, index=0)
     if worksheet is None:
         logger.warning(Messages.Error.worksheet_not_found)
         await bot_send_message(chat_id=chat_id, text=Messages.Error.worksheet_not_found)
-        return
+        return None, None
 
     return workbook, worksheet
 
@@ -46,7 +46,7 @@ async def create_new_xlsx(report_file: str) -> bool:
         return False
 
 
-async def get_worksheet(wb: Workbook, index: int = 0) -> Worksheet:
+async def get_worksheet(wb: Workbook, index: int = 0) -> Worksheet or None:
     """Получение Страницы из документа по индексу
     :param wb: Workbook - книга xls
     :param index: int - индекс листа
@@ -61,7 +61,7 @@ async def get_worksheet(wb: Workbook, index: int = 0) -> Worksheet:
         return None
 
 
-async def get_workbook(fill_report_path: str) -> Workbook:
+async def get_workbook(fill_report_path: str) -> Worksheet or None:
     """Открыть и загрузить Workbook
     :param fill_report_path: str полный путь к файлу
     :return: Workbook or None
